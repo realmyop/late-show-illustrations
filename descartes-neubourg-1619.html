@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Descartes à Neubourg</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0d0a08; --ink:#e9dcc2; --muted:#9c8b70; --line:#3a2e24; --gold:#c9a24c; --w:min(100%, calc(76vh * 16 / 9)); }
+  * { box-sizing:border-box; margin:0; }
+  html, body { background:var(--bg); color:var(--ink); font-family:"EB Garamond", Georgia, serif; }
+  body { min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:18px 16px 28px; gap:14px; }
+  header { width:var(--w); display:flex; justify-content:space-between; align-items:baseline; gap:4px 16px; flex-wrap:wrap; }
+  header h1 { font-family:"IM Fell English SC", Georgia, serif; font-weight:400; font-size:clamp(19px, 2.2vw, 27px); letter-spacing:.04em; }
+  header p { color:var(--muted); font-style:italic; font-size:16px; }
+  header a { color:inherit; }
+  .stage { position:relative; width:var(--w); aspect-ratio:16/9; background:#000; overflow:hidden; box-shadow:0 0 0 1px #2a2119, 0 24px 70px rgba(0,0,0,.65); }
+  canvas { width:100%; height:100%; display:block; }
+  .sub { position:absolute; left:9%; right:9%; bottom:6%; text-align:center; font-size:clamp(14px, 2vw, 29px); line-height:1.28; color:#f7eedb;
+         text-shadow:0 1px 2px #000, 0 0 16px rgba(0,0,0,.9), 0 0 4px rgba(0,0,0,.8); opacity:0; transition:opacity .5s; pointer-events:none; }
+  .sub.on { opacity:1; }
+  .sub .who { display:block; font-family:"IM Fell English SC", Georgia, serif; font-size:.6em; letter-spacing:.14em; color:#e2c88f; margin-bottom:.12em; }
+  .credit { position:absolute; right:2.2%; top:3%; max-width:46%; text-align:right; font-style:italic; font-size:clamp(10px, 1.05vw, 15px); line-height:1.3; color:#f3e8d2;
+            text-shadow:0 1px 2px #000, 0 0 10px rgba(0,0,0,.9); opacity:0; transition:opacity 1s; pointer-events:none; }
+  .credit.on { opacity:.92; }
+  .load { position:absolute; inset:0; display:grid; place-items:center; color:var(--muted); font-style:italic; font-size:18px; background:#000; transition:opacity .8s; }
+  .bar { width:var(--w); display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  button { font:inherit; font-size:15px; color:var(--ink); background:#1a140f; border:1px solid var(--line); padding:4px 12px; border-radius:3px; cursor:pointer; }
+  button:hover, button:focus-visible { border-color:var(--gold); outline:none; }
+  button.cur { border-color:var(--gold); color:#f3dfae; }
+  .track { flex:1 1 180px; height:6px; background:#241b14; border-radius:3px; position:relative; cursor:pointer; min-width:120px; }
+  .track b { position:absolute; left:0; top:0; bottom:0; width:0; background:var(--gold); border-radius:3px; }
+  .time { font-variant-numeric:tabular-nums; color:var(--muted); font-size:14px; min-width:76px; text-align:right; }
+  .chap { width:var(--w); display:flex; gap:6px; flex-wrap:wrap; }
+  .note { width:var(--w); color:var(--muted); font-size:15.5px; line-height:1.5; }
+  .note b { color:var(--ink); font-weight:500; }
+  .note ul { margin:6px 0 0 18px; padding:0; }
+  body.frame { padding:0; } body.frame header, body.frame .bar, body.frame .chap, body.frame .note { display:none; }
+  body.frame .stage { --w:100vw; width:100vw; box-shadow:none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Le Late Show du Siècle · Descartes à Neubourg</h1>
+  <p>Essai d’illustration à partir de tableaux du XVII<sup>e</sup> siècle · <a href="./">tous les essais</a></p>
+</header>
+
+<div class="stage" id="stage">
+  <canvas id="cv"></canvas>
+  <div class="credit" id="credit"></div>
+  <div class="sub" id="sub"></div>
+  <div class="load" id="load">Accrochage des tableaux…</div>
+</div>
+
+<div class="bar">
+  <button id="play" aria-label="Lecture ou pause">Pause</button>
+  <button id="again">Recommencer</button>
+  <div class="track" id="track"><b id="prog"></b></div>
+  <span class="time" id="time">0:00 / 0:00</span>
+</div>
+<div class="chap" id="chap"></div>
+<div class="note">
+  <p><b>Planche de test, version 2.</b> Les images sont de vrais tableaux de l’époque, du domaine public : on ne les retouche pas, on les anime à peine (mouvements de caméra lents, fumée du canon, flocons, lueur du feu, poussière dans la lumière). Espace : lecture ou pause · flèches : plan précédent ou suivant.</p>
+  <ul>
+    <li>Pieter Snayers, <i>La Bataille de la Montagne Blanche</i>, vers 1620</li>
+    <li>Hendrick Avercamp, <i>Paysage d’hiver avec patineurs</i>, vers 1608 · Rijksmuseum, Amsterdam</li>
+    <li>Rembrandt, <i>Philosophe en méditation</i>, 1632 · musée du Louvre</li>
+    <li>Jan Davidsz de Heem, <i>Nature morte aux livres et au violon</i>, 1628 · Mauritshuis, La Haye</li>
+    <li>Frans Hals, <i>Portrait de René Descartes</i>, vers 1649 · Statens Museum for Kunst, Copenhague</li>
+  </ul>
+  <p>Images : Wikimedia Commons.</p>
+</div>
+
+<script>
+/* =========================================================================
+   Outils
+   ========================================================================= */
+const hh = (i, k) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const sm = (k) => { k = clamp(k); return k * k * (3 - 2 * k); };
+const lerp = (a, b, k) => a + (b - a) * k;
+const flick = (T, s = 0) => 0.86 + 0.07 * Math.sin(T * 11.3 + s) + 0.05 * Math.sin(T * 6.7 + s * 2.1) + 0.03 * Math.sin(T * 23.1 + s * .7);
+// Interpolation de caméra entre deux cadrages {x, y, w} (centre en fraction de la toile, largeur vue en fraction de sa largeur)
+const camLerp = (a, b, k) => ({ x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), w: a.w * Math.pow(b.w / a.w, k) });
+
+function sprite(color) {
+  const c = document.createElement('canvas'); c.width = c.height = 64;
+  const g = c.getContext('2d');
+  const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  gr.addColorStop(0, color); gr.addColorStop(.4, color.replace(/[\d.]+\)$/, '0.6)')); gr.addColorStop(1, color.replace(/[\d.]+\)$/, '0)'));
+  g.fillStyle = gr; g.fillRect(0, 0, 64, 64);
+  return c;
+}
+const SPR_SNOW = sprite('rgba(250,250,252,1)'), SPR_GOLD = sprite('rgba(255,222,150,1)'), SPR_SMOKE = sprite('rgba(236,232,222,1)');
+function glow(c, x, y, r, rgb, a) {
+  const g = c.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(${rgb},${a})`); g.addColorStop(1, `rgba(${rgb},0)`);
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill();
+}
+
+/* =========================================================================
+   Les tableaux
+   ========================================================================= */
+const PAINTINGS = {
+  snayers: { src: 'tableaux/web/snayers.jpg', credit: 'Pieter Snayers, <i>La Bataille de la Montagne Blanche</i>, vers 1620' },
+  avercamp: { src: 'tableaux/web/avercamp.jpg', credit: 'Hendrick Avercamp, <i>Paysage d’hiver avec patineurs</i>, vers 1608<br>Rijksmuseum, Amsterdam' },
+  rembrandt: { src: 'tableaux/web/rembrandt.jpg', credit: 'Rembrandt, <i>Philosophe en méditation</i>, 1632<br>Musée du Louvre' },
+  deheem: { src: 'tableaux/web/deheem.jpg', credit: 'Jan Davidsz de Heem, <i>Nature morte aux livres et au violon</i>, 1628<br>Mauritshuis, La Haye' },
+  hals: { src: 'tableaux/web/hals.jpg', credit: 'Frans Hals, <i>Portrait de René Descartes</i>, vers 1649<br>Statens Museum for Kunst, Copenhague' },
+};
+
+/* Animations discrètes posées sur chaque toile.
+   p(nx, ny) donne la position à l’écran d’un point de la toile (en fractions) ; u = pixels écran par largeur de toile. */
+const FX = {
+  snayers(c, t, T, p, u) {
+    // le canon de droite tire toutes les 4 s : éclair, puis fumée qui monte et part vers la gauche
+    const [mx, my] = p(.868, .603);
+    const period = 4, ph = ((t + 1.2) % period), shot = Math.floor((t + 1.2) / period);
+    if (ph < .35) { c.globalCompositeOperation = 'screen'; glow(c, mx, my, u * .05 * (1 - ph / .35), '255,170,70', .8 * (1 - ph / .35)); }
+    c.globalCompositeOperation = 'source-over';
+    for (let s = Math.max(0, shot - 2); s <= shot; s++) {
+      const age = t + 1.2 - s * period;
+      if (age < 0) continue;
+      for (let k = 0; k < 16; k++) {
+        const q = age / 7 + k * .012;
+        if (q > 1) continue;
+        const x = mx - u * (.006 + .06 * q * (.6 + .8 * hh(k, s + 7)) + .01 * Math.sin(k * 2.1 + s));
+        const y = my - u * (.003 + .04 * Math.sqrt(q) * (.5 + hh(k, s + 9))) - u * .008 * Math.sin(k * 1.7);
+        const r = u * (.007 + .028 * Math.sqrt(q)) * (.6 + .6 * hh(k, s));
+        c.globalAlpha = .16 * (1 - q) * Math.min(1, age * 3);
+        c.drawImage(SPR_SMOKE, x - r, y - r, r * 2, r * 2);
+      }
+    }
+    // fumée lointaine de la mousqueterie, qui gonfle et s’efface lentement
+    for (let i = 0; i < 14; i++) {
+      const [x, y] = p(.12 + hh(i, 3) * .8, .4 + hh(i, 4) * .15);
+      const q = ((T * .07 + hh(i, 5)) % 1), r = u * (.015 + .03 * q);
+      c.globalAlpha = .28 * Math.sin(q * Math.PI);
+      c.drawImage(SPR_SMOKE, x - r - u * .02 * q, y - r - u * .01 * q, r * 2, r * 1.4);
+    }
+    c.globalAlpha = 1;
+  },
+  avercamp(c, t, T, p, u, W, H) {
+    // quelques flocons, légers
+    const k = W / 1920;
+    for (let i = 0; i < 90; i++) {
+      const a = hh(i, 11), b = hh(i, 12), q = hh(i, 13);
+      const r = (1.4 + 2.6 * q) * k, sp = (22 + 30 * q) * k;
+      const y = ((b * H * 1.2 + T * sp) % (H * 1.2)) - H * .1;
+      const x = ((a * W * 1.1 + Math.sin(T * .6 + i) * 14 * k + T * sp * .18) % (W * 1.1)) - W * .05;
+      c.globalAlpha = .35 + .4 * q;
+      c.drawImage(SPR_SNOW, x - r, y - r, r * 2, r * 2);
+    }
+    c.globalAlpha = 1;
+  },
+  rembrandt(c, t, T, p, u) {
+    const f = flick(T);
+    c.globalCompositeOperation = 'screen';
+    // le feu de l’âtre (en bas à droite) et son reflet sur l’escalier
+    let [x, y] = p(.99, .83); glow(c, x, y, u * .11 * f, '255,140,50', .32 * f); glow(c, x, y, u * .03, '255,200,110', .4 * f);
+    [x, y] = p(.8, .74); glow(c, x, y, u * .2, '255,150,70', .07 * f);
+    // poussière dans la lumière de la fenêtre
+    for (let i = 0; i < 46; i++) {
+      const q = (hh(i, 21) + T * (.012 + hh(i, 22) * .02)) % 1;
+      const [mx, my] = p(.24 + q * .2 + hh(i, 23) * .1, .38 + q * .38 + (hh(i, 24) - .5) * .12);
+      const r = u * (.0018 + .0028 * hh(i, 25));
+      c.globalAlpha = .55 * Math.sin(q * Math.PI) * (.6 + .4 * Math.sin(T * 1.3 + i));
+      c.drawImage(SPR_GOLD, mx - r, my - r, r * 2, r * 2);
+    }
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+  },
+  deheem(c, t, T, p, u) {
+    c.globalCompositeOperation = 'screen';
+    // le livre ouvert s’éclaire doucement, comme venu « d’en haut »
+    const k = sm((t - 3) / 6);
+    let [x, y] = p(.78, .42); glow(c, x, y, u * .2, '255,226,160', .16 * k * (.85 + .15 * Math.sin(T * 1.1)));
+    // poussière d’or dans le rayon de lumière déjà peint (du haut à gauche vers la table)
+    for (let i = 0; i < 60; i++) {
+      const q = (hh(i, 31) + T * (.01 + hh(i, 32) * .015)) % 1;
+      const along = q, across = (hh(i, 33) - .5) * .12;
+      [x, y] = p(.14 + along * .42 + across, .0 + along * .62 - across * .4);
+      const r = u * (.0016 + .0026 * hh(i, 34));
+      c.globalAlpha = .6 * Math.sin(q * Math.PI) * (.6 + .4 * Math.sin(T * 1.7 + i));
+      c.drawImage(SPR_GOLD, x - r, y - r, r * 2, r * 2);
+    }
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+  },
+  hals() {},
+};
+
+/* =========================================================================
+   Le montage : cadrages en fractions de la toile
+   ========================================================================= */
+const SHOTS = [
+  { img: 'snayers', name: 'L’armée', dur: 9.5, fade: 0,
+    cam: (t) => camLerp({ x: .3, y: .6, w: .56 }, { x: .64, y: .585, w: .64 }, sm(t / 9.5)) },
+  { img: 'avercamp', name: 'Neubourg', dur: 16, fade: 1.4,
+    cam: (t) => t < 7 ? camLerp({ x: .5, y: .5, w: 1 }, { x: .5, y: .52, w: .9 }, t / 7) : camLerp({ x: .5, y: .52, w: .9 }, { x: .63, y: .7, w: .38 }, sm((t - 7) / 9)),
+    title: ['Neubourg, sur le Danube', 'hiver 1619'] },
+  { img: 'rembrandt', name: 'Le poêle', dur: 16.5, fade: 1.6,
+    cam: (t) => camLerp({ x: .5, y: .55, w: 1 }, { x: .43, y: .6, w: .6 }, sm(t / 16.5)) },
+  { img: 'deheem', name: 'Le rêve', dur: 14, fade: 2,
+    cam: (t) => camLerp({ x: .5, y: .5, w: 1 }, { x: .72, y: .46, w: .5 }, sm(t / 14)) },
+  { img: 'hals', name: 'Descartes', dur: 8, fade: 1.8,
+    cam: (t) => camLerp({ x: .5, y: .43, w: .86 }, { x: .5, y: .395, w: .74 }, t / 8) },
+  { img: null, name: 'Fin', dur: 6, fade: 1.6, cam: () => ({ x: .5, y: .5, w: 1 }) },
+];
+let acc = 0;
+for (const s of SHOTS) { s.start = acc; acc += s.dur; }
+const TOTAL = acc;
+
+const SUBS = [
+  [1.6, 8.9, 'Descartes', 'J’ai connu la vie militaire dans l’armée du duc Maximilien I<sup>er</sup> de Bavière, où je me suis engagé à vingt-cinq ans.'],
+  [10.8, 17.6, 'Descartes', 'C’était en 1619, la nuit du 10 au 11 novembre. Nous passions nos quartiers d’hiver à Neubourg.'],
+  [18.4, 25.2, 'Descartes', 'J’étais alors en Allemagne, où l’occasion des guerres qui n’y sont pas encore finies m’avait appelé.'],
+  [26.8, 33.8, 'Descartes', 'Je passais la journée seul dans une chambre chauffée d’un poêle, où j’avais tout le loisir de m’entretenir de mes pensées…'],
+  [34.2, 41.6, 'Descartes', 'Et cette nuit-là, j’ai fait successivement trois rêves, qui me sont venus… d’en haut.'],
+  [43.2, 48.6, 'Descartes', 'Dans ce rêve, je trouvais deux livres : d’abord un dictionnaire, puis un livre de poésie.'],
+  [48.9, 52.3, 'Descartes', 'Mes yeux s’arrêtèrent sur le vers : <i>Quod vitæ sectabor iter ?</i>'],
+  [52.6, 55.8, 'Élisabeth', '« Quel chemin suivrai-je dans la vie ? »'],
+  [57.0, 63.4, 'Descartes', 'Conclusion : j’étais destiné à fonder une science universelle et une nouvelle philosophie. Eh ouais.'],
+];
+
+/* =========================================================================
+   Rendu
+   ========================================================================= */
+if (new URLSearchParams(location.search).has('frame')) document.body.classList.add('frame');
+const stage = document.getElementById('stage'), cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const dpr = Math.min(2, window.devicePixelRatio || 1);
+const W = Math.max(960, Math.min(1920, Math.round(stage.clientWidth * dpr))), H = Math.round(W * 9 / 16);
+cv.width = W; cv.height = H;
+const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c.getContext('2d'); };
+const bufA = mk(), bufB = mk();
+const IMG = {};
+
+function renderShot(c, shot, t, T) {
+  c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over';
+  c.fillStyle = '#000'; c.fillRect(0, 0, W, H);
+  if (!shot.img) { titleCard(c, t); return; }
+  const im = IMG[shot.img]; if (!im) return;
+  const cam = shot.cam(t), iw = im.naturalWidth, ih = im.naturalHeight;
+  const k = W / (cam.w * iw);                         // pixels écran par pixel de toile
+  const ox = W / 2 - cam.x * iw * k, oy = H / 2 - cam.y * ih * k;
+  c.imageSmoothingQuality = 'high';
+  c.drawImage(im, ox, oy, iw * k, ih * k);
+  const p = (nx, ny) => [ox + nx * iw * k, oy + ny * ih * k];
+  c.save(); FX[shot.img](c, t, T, p, iw * k, W, H); c.restore();
+  if (shot.title) {
+    const a = sm((t - 1.2) / 1.2) * (1 - sm((t - 5.6) / 1.2));
+    if (a > 0) {
+      const s = W / 1920;
+      c.save(); c.globalAlpha = a; c.textAlign = 'left'; c.fillStyle = '#2a1c14';
+      c.shadowColor = 'rgba(255,244,222,.85)'; c.shadowBlur = 16 * s;
+      c.font = `${52 * s}px "IM Fell English SC", Georgia, serif`; c.fillText(shot.title[0], 110 * s, 140 * s);
+      c.font = `italic ${38 * s}px "IM Fell English", Georgia, serif`; c.fillText(shot.title[1], 114 * s, 192 * s);
+      c.restore();
+    }
+  }
+}
+
+function titleCard(c, t) {
+  const s = W / 1920;
+  c.save(); c.textAlign = 'center';
+  c.globalAlpha = sm((t - .3) / 1.4); c.fillStyle = '#e8d6b0';
+  c.font = `${78 * s}px "IM Fell English", Georgia, serif`; c.fillText('Le Late Show du Siècle', W / 2, H * .47);
+  c.strokeStyle = '#8a6f3e'; c.lineWidth = 1.5 * s;
+  c.beginPath(); c.moveTo(W / 2 - 180 * s, H * .52); c.lineTo(W / 2 + 180 * s, H * .52); c.stroke();
+  c.globalAlpha = sm((t - 1) / 1.4); c.fillStyle = '#a8977a';
+  c.font = `italic ${30 * s}px "IM Fell English", Georgia, serif`;
+  c.fillText('Descartes à Neubourg, hiver 1619 — essai d’illustration', W / 2, H * .58);
+  c.restore();
+}
+
+// Finition légère : grain de pellicule et vignette (les toiles gardent leurs couleurs)
+let GRAINS, VIGN;
+function buildFinish() {
+  let seed = 42;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+  GRAINS = Array.from({ length: 4 }, () => {
+    const t = document.createElement('canvas'); t.width = t.height = 256;
+    const tg = t.getContext('2d'), ti = tg.createImageData(256, 256);
+    for (let i = 0; i < ti.data.length; i += 4) { const v = 128 + (rnd() - .5) * 255; ti.data[i] = ti.data[i + 1] = ti.data[i + 2] = v; ti.data[i + 3] = 255; }
+    tg.putImageData(ti, 0, 0);
+    return ctx.createPattern(t, 'repeat');
+  });
+  VIGN = document.createElement('canvas'); VIGN.width = W; VIGN.height = H;
+  const vg = VIGN.getContext('2d');
+  vg.translate(W / 2, H / 2); vg.scale(1, H / W);
+  const gr = vg.createRadialGradient(0, 0, W * .32, 0, 0, W * .76);
+  gr.addColorStop(0, 'rgba(12,8,4,0)'); gr.addColorStop(.7, 'rgba(12,8,4,.22)'); gr.addColorStop(1, 'rgba(8,5,3,.6)');
+  vg.fillStyle = gr; vg.fillRect(-W, -W, 2 * W, 2 * W);
+}
+function finish(c, T) {
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+  c.drawImage(VIGN, 0, 0);
+  c.globalCompositeOperation = 'overlay'; c.globalAlpha = .06;
+  const f = Math.floor(T * 24), ox = (hh(f, 1) * 256) | 0, oy = (hh(f, 2) * 256) | 0;
+  c.translate(-ox, -oy); c.fillStyle = GRAINS[f % 4]; c.fillRect(ox, oy, W, H);
+  c.setTransform(1, 0, 0, 1, 0, 0);
+  c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1;
+}
+
+function draw(T) {
+  let i = SHOTS.findIndex((s) => T >= s.start && T < s.start + s.dur);
+  if (i < 0) i = SHOTS.length - 1;
+  const s = SHOTS[i], t = T - s.start;
+  renderShot(bufA, s, t, T);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  if (i > 0 && t < s.fade) {
+    const pr = SHOTS[i - 1];
+    renderShot(bufB, pr, pr.dur + t, T);
+    ctx.drawImage(bufB.canvas, 0, 0);
+    ctx.globalAlpha = sm(t / s.fade);
+  }
+  ctx.drawImage(bufA.canvas, 0, 0);
+  ctx.globalAlpha = 1;
+  finish(ctx, T);
+  const fin = Math.max(1 - sm(T / 1.4), sm((T - (TOTAL - 1.4)) / 1.4));
+  if (fin > 0) { ctx.globalAlpha = fin; ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+  updateUI(T, i);
+}
+
+/* =========================================================================
+   Interface
+   ========================================================================= */
+const subEl = document.getElementById('sub'), creditEl = document.getElementById('credit'), playB = document.getElementById('play'),
+  prog = document.getElementById('prog'), timeEl = document.getElementById('time'), chapEl = document.getElementById('chap');
+let curSub = -1, curShot = -1, curCredit = '';
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+SHOTS.forEach((s, i) => {
+  const b = document.createElement('button'); b.textContent = s.name;
+  b.onclick = () => seek(s.start + (i ? s.fade : 0));
+  chapEl.appendChild(b);
+});
+function updateUI(T, i) {
+  const k = SUBS.findIndex(([a, b]) => T >= a && T < b);
+  if (k !== curSub) {
+    curSub = k;
+    if (k >= 0) { subEl.innerHTML = `<span class="who">${SUBS[k][2]}</span>${SUBS[k][3]}`; subEl.classList.add('on'); }
+    else subEl.classList.remove('on');
+  }
+  if (i !== curShot) { curShot = i; [...chapEl.children].forEach((b, j) => b.classList.toggle('cur', j === i)); }
+  // la légende du tableau s’affiche au début de chaque plan, quelques secondes
+  const s = SHOTS[i], t = T - s.start, cr = s.img && t > (i ? s.fade : 1) && t < (i ? s.fade : 1) + 4.5 ? PAINTINGS[s.img].credit : '';
+  if (cr !== curCredit) { curCredit = cr; if (cr) creditEl.innerHTML = cr; creditEl.classList.toggle('on', !!cr); }
+  prog.style.width = (T / TOTAL * 100).toFixed(2) + '%';
+  timeEl.textContent = `${fmt(T)} / ${fmt(TOTAL)}`;
+}
+
+const q = new URLSearchParams(location.search);
+let playing = !q.has('t'), T = q.has('t') ? clamp(+q.get('t'), 0, TOTAL - .01) : 0, last = null;
+function seek(v) { T = clamp(v, 0, TOTAL - .01); if (!playing) draw(T); }
+function setPlay(v) { playing = v; playB.textContent = v ? 'Pause' : 'Lecture'; last = null; }
+playB.onclick = () => setPlay(!playing);
+document.getElementById('again').onclick = () => { seek(0); setPlay(true); };
+document.getElementById('track').onclick = (e) => { const r = e.currentTarget.getBoundingClientRect(); seek((e.clientX - r.left) / r.width * TOTAL); };
+window.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') { e.preventDefault(); setPlay(!playing); }
+  if (e.code === 'ArrowRight' || e.code === 'ArrowLeft') {
+    const i = SHOTS.findIndex((s) => T >= s.start && T < s.start + s.dur);
+    const j = clamp(i + (e.code === 'ArrowRight' ? 1 : -1), 0, SHOTS.length - 1);
+    seek(SHOTS[j].start + (j ? SHOTS[j].fade : 0));
+  }
+});
+setPlay(playing);
+
+function loop(now) {
+  if (playing) {
+    if (last != null) T += Math.min(.1, (now - last) / 1000);
+    last = now;
+    if (T >= TOTAL) T = 0;
+  }
+  draw(T);
+  requestAnimationFrame(loop);
+}
+
+(async () => {
+  const load = document.getElementById('load');
+  try {
+    await Promise.race([
+      Promise.all(['34px "IM Fell English"', 'italic 34px "IM Fell English"', '34px "IM Fell English SC"', '20px "EB Garamond"'].map((f) => document.fonts.load(f))),
+      new Promise((r) => setTimeout(r, 2500)),
+    ]);
+  } catch (e) { /* polices de secours */ }
+  let n = 0;
+  const ids = Object.keys(PAINTINGS);
+  await Promise.all(ids.map(async (id) => {
+    const im = new Image();
+    im.src = PAINTINGS[id].src;
+    await im.decode();
+    IMG[id] = im;
+    load.textContent = `Accrochage des tableaux… ${++n} / ${ids.length}`;
+  }));
+  buildFinish();
+  load.style.opacity = 0;
+  setTimeout(() => load.remove(), 900);
+  requestAnimationFrame(loop);
+})().catch((e) => { document.getElementById('load').textContent = 'Erreur : ' + e.message; console.error(e); });
+</script>
+</body>
+</html>
